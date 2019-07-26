@@ -165,6 +165,7 @@ router.post("/Add", (req, res) => {
 
         let addItem = new Item({
 
+            itemID: req.body.itemID,
             username: req.body.username,
             email: req.body.email,
             password: req.body.password,
@@ -203,7 +204,7 @@ router.post("/Add", (req, res) => {
 })
 
 // PUT DiscussionBoard/UpdatePost
-// Updates post to database if user credentials are correct
+// Updates post to database if user credentials are correct by ItemID
 // Public Access
 
 router.put("/UpdatePost", (req, res) => {
@@ -231,7 +232,7 @@ router.put("/UpdatePost", (req, res) => {
 
                     if (passwordMatch && emailMatch) {
                         Item.updateOne({
-                                "username": req.body.username
+                                "itemID": req.body.itemID
                             }, {
                                 $set: {
                                     "content": req.body.content
@@ -252,7 +253,7 @@ router.put("/UpdatePost", (req, res) => {
 })
 
 // PUT DiscussionBoard/DeletePost
-// Deletes post to database if user credentials are correct
+// Deletes post in database if user credentials are correct by ItemID
 // Public Access
 
 router.delete("/DeletePost", (req, res) => {
@@ -280,10 +281,9 @@ router.delete("/DeletePost", (req, res) => {
 
                     if (passwordMatch && emailMatch) {
                         Item.deleteOne({
-                                "username": req.body.username
+                                "itemID": req.body.itemID
                             }, )
                             .then(() => res.status(200).send("Item Deleted!"))
-                            .then(() => console.log(`Item Deleted`))
 
                     } else {
                         res.status(555).send("Incorrect Login Details, Please Try Again")

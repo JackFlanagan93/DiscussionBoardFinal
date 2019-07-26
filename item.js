@@ -3,6 +3,7 @@ const Schema = mongoose.Schema;
 
 //defining schema
 var itemSchema = new Schema({
+    itemID: String,
     username: String,
     email: String,
     password:String, 
