@@ -19,32 +19,41 @@ router.get("/Test", (req, res) => {
 router.post("/SignUp", (req, res) => {
 
     let checkUsername = req.body.username;
-
+    
     if (isAlphanumeric(checkUsername) && !isEmpty(checkUsername)) {
+        
 
-        let addUser = new User({
+        if(req.body.password == req.body.confirmPassword){
+            console.log(req.body.password)
+            console.log(req.body.confirmPassword)
+            let addUser = new User({
 
-            username: req.body.username,
-            email: req.body.email,
-            password: req.body.password
-
-        })
-
-        if (Validator.isEmail(req.body.email)) {
-
-            bcrypt.hash(req.body.password, 10)
-                .then((hash) => {
-                    addUser.password = hash
-                    addUser.save()
-                    res.status(200).send("Added New Item")
-                })
-                .catch(err => res.status(555).json({
-                    "Fault": `${err}`
-                }))
-
-        } else {
-            res.status(555).send("Please Enter A Valid Email")
+                username: req.body.username,
+                email: req.body.email,
+                password: req.body.password,
+    
+            })
+    
+            if (Validator.isEmail(req.body.email)) {
+    
+                bcrypt.hash(req.body.password, 10)
+                    .then((hash) => {
+                        addUser.password = hash
+                        addUser.save()
+                        res.status(200).send("Added New Item")
+                    })
+                    .catch(err => res.status(555).json({
+                        "Fault": `${err}`
+                    }))
+    
+            } else {
+                res.status(555).send("Please Enter A Valid Email")
+            }
+        } else { 
+            res.status(555).send("Error: Passwords Do Not Match, Please Try Again")
         }
+
+        
     } else {
         res.status(555).send("Please Enter A Valid Username")
     }
@@ -54,22 +63,32 @@ router.post("/Login", (req, res) => {
 
     // take details from request and store
     // search db by username
-    // hash username using the salt
+    // hash password using the salt
     // verify they match
     let emailMatch;
+    let storedEmail;
+    let passwordMatch;
 
     User.findOne({
             "username": req.body.username
         })
-        .then((user) => bcrypt.compare(req.body.password, user.password))
+        .then((user) => {
+           
+            storedEmail = user.email
+            return bcrypt.compare(req.body.password, user.password)
+        })
         .then((same => {
+            if (same) {
+                passwordMatch = true;
+                if (req.body.email === storedEmail) {
+                    emailMatch = true
+                } else emailMatch = false;
 
-            if (req.body.email == user.email) {
-                emailMatch = true
-            } else emailMatch = false;
-
-            if (match && emailMatch) {
-                res.status(200).send("User Login Succesful")
+                if (passwordMatch && emailMatch) {
+                    res.status(200).send("User Login Succesful")
+                } else {
+                    res.status(555).send("Incorrect Login Details, Please Try Again")
+                }
             } else {
                 res.status(555).send("Incorrect Login Details, Please Try Again")
             }
