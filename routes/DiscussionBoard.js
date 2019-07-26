@@ -297,8 +297,4 @@ router.delete("/DeletePost", (req, res) => {
     }
 })
 
-
-
-
-
 module.exports = router;
