@@ -19,41 +19,73 @@ router.get("/Test", (req, res) => {
 router.post("/SignUp", (req, res) => {
 
     let checkUsername = req.body.username;
-    
-    if (isAlphanumeric(checkUsername) && !isEmpty(checkUsername)) {
-        
+    let uniqueUsername;
+    let uniqueEmail;
 
-        if(req.body.password == req.body.confirmPassword){
-            console.log(req.body.password)
-            console.log(req.body.confirmPassword)
+    if (isAlphanumeric(checkUsername) && !isEmpty(checkUsername)) {
+
+        User.findOne({
+            username: req.body.username
+        }, function (err, user) {
+            if (err) {
+                console.log(err)
+            }
+            if (user) {
+                uniqueUsername = false
+            } else {
+                uniqueUsername = true
+            }
+        })
+
+        User.findOne({
+            email: req.body.email
+        }, function (err, user) {
+            if (err) {
+                console.log(err)
+            }
+            if (user) {
+                uniqueEmail = false
+            } else {
+                uniqueEmail = true
+            }
+        })
+
+        if (req.body.password == req.body.confirmPassword) {
             let addUser = new User({
 
                 username: req.body.username,
                 email: req.body.email,
                 password: req.body.password,
-    
+
             })
-    
+
             if (Validator.isEmail(req.body.email)) {
-    
+
                 bcrypt.hash(req.body.password, 10)
                     .then((hash) => {
                         addUser.password = hash
-                        addUser.save()
-                        res.status(200).send("Added New Item")
+
+                        if (uniqueEmail == true && uniqueUsername == true) {
+                            addUser.save()
+                            res.status(200).send("Added New Item")
+                        } else {
+                            res.status(555).send(`Please Try Again, Username Available: ${uniqueUsername}, Email Available: ${uniqueEmail}`)
+                        }
+
+
                     })
                     .catch(err => res.status(555).json({
                         "Fault": `${err}`
                     }))
-    
+
             } else {
                 res.status(555).send("Please Enter A Valid Email")
             }
-        } else { 
+        } else {
             res.status(555).send("Error: Passwords Do Not Match, Please Try Again")
         }
 
-        
+
     } else {
         res.status(555).send("Please Enter A Valid Username")
     }
@@ -61,10 +93,6 @@ router.post("/SignUp", (req, res) => {
 
 router.post("/Login", (req, res) => {
 
-    // take details from request and store
-    // search db by username
-    // hash password using the salt
-    // verify they match
     let emailMatch;
     let storedEmail;
     let passwordMatch;
@@ -73,7 +101,7 @@ router.post("/Login", (req, res) => {
             "username": req.body.username
         })
         .then((user) => {
-           
+
             storedEmail = user.email
             return bcrypt.compare(req.body.password, user.password)
         })
