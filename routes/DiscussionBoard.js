@@ -5,6 +5,7 @@ const isAlphanumeric = require("../Validator/IsAlphanumeric")
 const isEmpty = require("../Validator/IsEmpty")
 const bcrypt = require('bcrypt');
 const Validator = require('validator');
+let Item = require("../item.js");
 
 // GET DiscussionBoard/Test
 // Returns a test message back to the user
@@ -91,6 +92,10 @@ router.post("/SignUp", (req, res) => {
     }
 });
 
+
+// POST DiscussionBoard/Login
+// Returns logged in to user if credentials match stored versions on database
+// Public Access
 router.post("/Login", (req, res) => {
 
     let emailMatch;
@@ -124,11 +129,173 @@ router.post("/Login", (req, res) => {
         .catch(err => res.status(555).send(`Error: ${err}`))
 });
 
+// GET DiscussionBoard/Board
+// Returns all posts in the database with the username only
+// Public Access
 
+router.get("/Board", (req, res) => {
 
+    const errors = {};
 
+    Item.find({}, ` -_id -email -password -__v`)
+        .then(items => {
+            if (!items) {
+                errors.noitems = "There are no items";
+                res.status(404).json(errors);
+            }
+            res.json(items);
+        })
+        .catch(err => res.status(404).json({
+            noitems: `There are no items: ${err}`
+        }));
 
+});
 
+// POST DiscussionBoard/Add
+// Adds post to database if user credentials are correct
+// Public Access
+
+router.post("/Add", (req, res) => {
+    let emailMatch;
+    let storedEmail;
+    let passwordMatch;
+    let checkUsername = req.body.username;
+
+    if (isAlphanumeric(checkUsername) && !isEmpty(checkUsername)) {
+
+        let addItem = new Item({
+
+            username: req.body.username,
+            email: req.body.email,
+            password: req.body.password,
+            content: req.body.content
+        })
+
+        User.findOne({
+                "username": req.body.username
+            })
+            .then((user) => {
+
+                storedEmail = user.email
+                return bcrypt.compare(req.body.password, user.password)
+            })
+            .then((same => {
+                if (same) {
+                    passwordMatch = true;
+                    if (req.body.email === storedEmail) {
+                        emailMatch = true
+                    } else emailMatch = false;
+
+                    if (passwordMatch && emailMatch) {
+                        addItem.save()
+                            .then(() => res.status(200).send("Item Added To The DB!"))
+                            .then(() => console.log(`Item Added To The DB ${addItem}`))
+                    } else {
+                        res.status(555).send("Incorrect Login Details, Please Try Again")
+                    }
+                } else {
+                    res.status(555).send("Incorrect Login Details, Please Try Again")
+                }
+            }))
+            .catch(err => res.status(555).send(`Error: ${err}`))
+
+    }
+})
+
+// PUT DiscussionBoard/UpdatePost
+// Updates post to database if user credentials are correct
+// Public Access
+
+router.put("/UpdatePost", (req, res) => {
+    let emailMatch;
+    let storedEmail;
+    let passwordMatch;
+    let checkUsername = req.body.username;
+
+    if (isAlphanumeric(checkUsername) && !isEmpty(checkUsername)) {
+
+        User.findOne({
+                "username": req.body.username
+            })
+            .then((user) => {
+
+                storedEmail = user.email
+                return bcrypt.compare(req.body.password, user.password)
+            })
+            .then((same => {
+                if (same) {
+                    passwordMatch = true;
+                    if (req.body.email === storedEmail) {
+                        emailMatch = true
+                    } else emailMatch = false;
+
+                    if (passwordMatch && emailMatch) {
+                        Item.updateOne({
+                                "username": req.body.username
+                            }, {
+                                $set: {
+                                    "content": req.body.content
+                                }
+                            })
+                            .then(() => res.status(200).send("Item Updated!"))
+                            .then(() => console.log(`Item Updated`))
+                    } else {
+                        res.status(555).send("Incorrect Login Details, Please Try Again")
+                    }
+                } else {
+                    res.status(555).send("Incorrect Login Details, Please Try Again")
+                }
+            }))
+            .catch(err => res.status(555).send(`Error: ${err}`))
+
+    }
+})
+
+// PUT DiscussionBoard/DeletePost
+// Deletes post to database if user credentials are correct
+// Public Access
+
+router.delete("/DeletePost", (req, res) => {
+    let emailMatch;
+    let storedEmail;
+    let passwordMatch;
+    let checkUsername = req.body.username;
+
+    if (isAlphanumeric(checkUsername) && !isEmpty(checkUsername)) {
+
+        User.findOne({
+                "username": req.body.username
+            })
+            .then((user) => {
+
+                storedEmail = user.email
+                return bcrypt.compare(req.body.password, user.password)
+            })
+            .then((same => {
+                if (same) {
+                    passwordMatch = true;
+                    if (req.body.email === storedEmail) {
+                        emailMatch = true
+                    } else emailMatch = false;
+
+                    if (passwordMatch && emailMatch) {
+                        Item.deleteOne({
+                                "username": req.body.username
+                            }, )
+                            .then(() => res.status(200).send("Item Deleted!"))
+                            .then(() => console.log(`Item Deleted`))
+
+                    } else {
+                        res.status(555).send("Incorrect Login Details, Please Try Again")
+                    }
+                } else {
+                    res.status(555).send("Incorrect Login Details, Please Try Again")
+                }
+            }))
+            .catch(err => res.status(555).send(`Error: ${err}`))
+
+    }
+})
 
 
 
